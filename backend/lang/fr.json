@@ -1,0 +1,8 @@
+{
+    "Too Many Attempts.": "Trop de tentatives. Réessayez dans quelques instants.",
+    "Unauthenticated.": "Authentification requise.",
+    "This action is unauthorized.": "Action non autorisée.",
+    "Not Found": "Ressource introuvable.",
+    "(and :count more error)": "(et :count autre erreur)",
+    "(and :count more errors)": "(et :count autre erreur)|(et :count autres erreurs)"
+}

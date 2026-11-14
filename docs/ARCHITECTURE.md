@@ -3,7 +3,7 @@
 > Plateforme intelligente de soutien scolaire du CE1 à la Terminale.
 > Premier programme ciblé : République du Congo. Architecture multi-pays.
 >
-> Statut : **proposition à valider** (étape 0, aucun code applicatif écrit).
+> Statut : **architecture validée**, phase 1 (socle) livrée. Voir §9 pour les décisions.
 > Date : 14/11/2026.
 
 *« Mayela » : clin d'œil au lingala* mayele *(intelligence, débrouillardise).
@@ -66,7 +66,7 @@ Détail complet dans [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md). En résumé :
 └──────────┬────────────┘                  │
            │ HTTPS / JSON (API REST v1, Sanctum)
 ┌──────────▼──────────────────────────────▼─────────────┐
-│               Backend Laravel 12 (PHP 8.3)            │
+│               Backend Laravel 13 (PHP 8.3)            │
 │        Monolithe modulaire : un module par domaine    │
 │  Identity · Curriculum · Content · Learning ·         │
 │  Competency(Adaptatif) · Gamification · Exams ·       │
@@ -86,16 +86,16 @@ Détail complet dans [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md). En résumé :
 | Sujet | Choix | Pourquoi |
 |---|---|---|
 | Structure du dépôt | **Monorepo** : `backend/`, `mobile/`, `docs/` | Une seule source de vérité, API et app versionnées ensemble. |
-| Backend | **Laravel 12**, PHP 8.3, monolithe modulaire | Proche de votre expérience PHP ; un monolithe bien découpé est plus simple à opérer que des microservices pour un MVP. |
+| Backend | **Laravel 13**, PHP 8.3, monolithe modulaire | Proche de votre expérience PHP ; un monolithe bien découpé est plus simple à opérer que des microservices pour un MVP. |
 | Base de données | **PostgreSQL 16** (+ `pgvector`) | JSONB pour les contenus de questions variés, recherche plein texte FR, vecteurs pour le tuteur IA (RAG) sans service externe. |
-| Back-office | **Filament v3** dans l'app Laravel | CRUD, formulaires riches, imports, tableaux de bord en PHP pur : rapide à livrer et utilisable par une équipe non technique. |
+| Back-office | **Filament v5** dans l'app Laravel (validé) | CRUD, formulaires riches, imports, tableaux de bord en PHP pur : rapide à livrer et utilisable par une équipe non technique. |
 | Auth mobile | **Laravel Sanctum** (tokens à capacités) | Simple, natif, révocable par appareil. |
 | Rôles | **spatie/laravel-permission** | Standard de l'écosystème, gère rôles et permissions. |
 | Files / jobs | Redis + **Horizon** | Appels IA, imports, notifications et calculs adaptatifs en asynchrone. |
 | Doc API | **Scribe** (OpenAPI 3) | Générée depuis le code et les FormRequests. |
 | Tests | **Pest** (backend), `flutter_test` + `integration_test` (mobile) | |
-| Mobile | **Flutter 3.x**, Riverpod, go_router, Dio, Drift (SQLite), freezed | Architecture « feature-first », hors ligne natif. |
-| IA | Module `AI` avec **interface `LlmProvider`** + adaptateurs | Changer de fournisseur = changer de config. Extractible en service séparé plus tard. |
+| Mobile | **Flutter 3.50**, Riverpod 3, go_router, Dio, Drift (SQLite, phase 3) | Architecture « feature-first », hors ligne natif. |
+| IA | Module `AI` avec **interface `LlmProvider`** + adaptateurs, **désactivé par défaut** (`AI_PROVIDER=none`) | Pas de budget IA au lancement : tout fonctionne sans IA ; un fournisseur s'active par configuration le moment venu. |
 | Moteur adaptatif | **Algorithme déterministe** (BKT simplifié / Elo), pas un LLM | Explicable, testable, peu coûteux. Le LLM explique, il ne note pas. |
 
 ---
@@ -130,7 +130,7 @@ backend/
 - Validation dans les **FormRequests**, sortie via **API Resources** (format JSON stable).
 - Autorisations dans les **Policies** (jamais dans les contrôleurs).
 - Les modules communiquent par **interfaces et événements** (`AttemptSubmitted` → Competency, Gamification) et non par appels croisés aux modèles.
-- Erreurs normalisées (RFC 7807 `application/problem+json`), journalisation structurée (JSON) avec `request_id`.
+- Erreurs au format JSON standard de Laravel (`{message, errors}`), journalisation structurée avec `request_id`.
 
 ### 2.1 Couche IA (indépendante du fournisseur)
 
@@ -368,8 +368,8 @@ Versionnement par préfixe `/v1`, pagination par curseur, réponses `JsonResourc
 
 | Phase | Livrables | Critère de « terminé » |
 |---|---|---|
-| **1. Socle** | Monorepo, Laravel 12 + Postgres + Redis (Docker Compose), Sanctum, rôles et permissions, Filament (connexion admin + 2FA, gestion des utilisateurs), squelette Flutter (thème Mayela à 3 univers, routing, client API, écran de connexion), CI GitHub Actions (Pest, Pint, Larastan, `flutter analyze` / `flutter test`) | Connexion admin et élève fonctionnelle de bout en bout, tests verts en CI |
-| **2. Pédagogie** | Migrations 5.2 à 5.4, CRUD Filament de toute la hiérarchie, éditeur de leçon par blocs, workflow brouillon → relecture → publication, versions, import CSV/Excel, seeders **DÉMO** étiquetés | Un pédagogue non technique crée, fait valider et publie un chapitre complet |
+| **1. Socle** | Monorepo, Laravel 13 + Postgres + Redis (Docker Compose), Sanctum, rôles et permissions, Filament (connexion admin + 2FA, gestion des utilisateurs), squelette Flutter (thème Mayela à 3 univers, routing, client API, écran de connexion), CI GitHub Actions (Pest, Pint, `composer audit`, `flutter analyze` / `flutter test`) | Connexion admin et élève fonctionnelle de bout en bout, tests verts en CI |
+| **2. Pédagogie** | Migrations 5.2 à 5.4, CRUD Filament de toute la hiérarchie, éditeur de leçon par blocs, workflow brouillon → relecture → publication, versions, import CSV/Excel, **import de cours scannés (OCR → brouillon → validation)**, seeders **DÉMO** étiquetés | Un pédagogue non technique crée, fait valider et publie un chapitre complet |
 | **3. App élève** | Inscription parent + enfant, choix de classe/série, tableau de bord, cours, moteur de questions (QCM, numérique, texte à trous…), progression, packs hors ligne et synchronisation | Un élève suit un chapitre et réalise un quiz, y compris hors ligne |
 | **4. Gamification** | Carte d'aventure primaire, XP (registre), étoiles, badges, missions du jour, déblocage des chapitres, pauses | Chapitre validé → étape suivante débloquée + récompense |
 | **5. IA** | Compétences, diagnostic, BKT, parcours personnalisé, tuteur RAG + garde-fous + quotas + journal admin | Diagnostic → parcours généré ; tuteur qui refuse de donner directement la réponse (tests) |
@@ -382,7 +382,7 @@ Versionnement par préfixe `/v1`, pagination par curseur, réponses `JsonResourc
 ```
 docker-compose.yml                     # postgres, redis, mailpit
 .github/workflows/{backend,mobile}.yml
-backend/ (laravel new)                 # + sanctum, spatie/permission, filament, scribe, pest, larastan, pint
+backend/ (laravel new)                 # + sanctum, spatie/permission, filament, scribe, pest, pint (Larastan : à ajouter, voir README)
   app/Modules/Identity/...             # modèles User, StudentProfile, ParentProfile, Actions d'auth, Policies
   database/migrations/*_identity_*     # users, student_profiles, parent_profiles, parent_student, consents, devices
   database/seeders/RolesAndPermissionsSeeder.php
@@ -403,10 +403,37 @@ README.md
 - **Annales et corrigés** : importés depuis des sources fiables, champs `source_name`, `source_url`, `source_verified_at`, `verified_by` obligatoires pour l'affichage ; un corrigé rédigé par l'équipe est étiqueté « corrigé proposé par l'équipe pédagogique », jamais « officiel ».
 - **Données de démo** : drapeau `is_demo`, mention « DÉMO » visible.
 
-## 9. Décisions à confirmer
+## 9. Décisions validées (14/11/2026)
 
-1. **Back-office Filament** (recommandé) ou back-office séparé (Vue/React + API).
-2. **Fournisseur IA initial** (l'architecture permet d'en changer) et budget mensuel par élève.
-3. **Hébergement** : VPS (OVH, Hetzner…) ou cloud managé ; région proche de l'Afrique centrale pour la latence.
-4. **Âge de la majorité numérique** retenu pour le consentement parental (15 ans proposé).
-5. **Accès aux sources officielles** des programmes et des annales : qui les fournit ?
+| # | Sujet | Décision | Conséquence technique |
+|---|---|---|---|
+| 1 | Back-office | **Filament** | Livré en phase 1 (v5), 2FA obligatoire pour le personnel. |
+| 2 | IA | **Pas de budget pour l'instant** | Module IA désactivé par défaut (`AI_PROVIDER=none`) : l'interface du tuteur est **masquée**, pas simulée. Le diagnostic et les parcours personnalisés reposent sur le moteur de règles (BKT), qui ne coûte rien. Options futures sans gros budget : quotas gratuits de fournisseurs (à vérifier pour les données de mineurs) ou modèle open source auto-hébergé. |
+| 3 | Hébergement | « Comme Scolia » | **À préciser** (voir ci-dessous). En attendant : tout est conteneurisable (Docker), donc portable vers n'importe quel hébergeur ; cible économique d'un seul VPS au démarrage. |
+| 4 | Majorité numérique | **15 ans** | Implémenté : en dessous, compte créé par un parent avec consentement horodaté ; à partir de 15 ans, inscription autonome. |
+| 5 | Contenus | **Cours scannés par l'équipe** | Pipeline d'import en phase 2, décrit en §9.1. |
+
+**Point ouvert, l'hébergement** : je n'ai pas trouvé de référence publique à « Scolia ». Merci de préciser
+de quoi il s'agit (un site, une application, l'hébergeur utilisé), pour reproduire le même choix.
+
+### 9.1 Import des cours scannés (phase 2)
+
+```
+Scan (PDF / photos) ──► upload back-office ──► OCR Tesseract (français, gratuit, sur le serveur)
+      ──► découpage en brouillon de leçon (texte + images recadrées) ──► correction dans l'éditeur
+      ──► relecture par un admin pédagogique ──► publication (versionnée)
+```
+
+- Le scan original est conservé et rattaché au chapitre (traçabilité de la source).
+- Un contenu issu de l'OCR reste **brouillon** tant qu'il n'est pas relu : rien n'est publié automatiquement.
+- Conseils de numérisation : 300 dpi, page à plat, bonne lumière (fiche fournie dans le back-office).
+- **Droits d'auteur** : ne numériser que des contenus dont Mayela a les droits (cours rédigés par l'équipe,
+  manuels sous licence ou avec autorisation de l'éditeur).
+
+## 10. État d'avancement
+
+| Phase | Statut |
+|---|---|
+| 0. Audit et architecture | ✅ |
+| 1. Socle technique | ✅ Backend (identité, rôles, API d'authentification, back-office, 40 tests) et app mobile (thème, navigation, connexions, espace parent, 17 tests) |
+| 2. Gestion pédagogique | ⏭️ Prochaine étape |

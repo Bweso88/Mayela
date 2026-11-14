@@ -16,13 +16,13 @@ class StudentHomeScreen extends ConsumerWidget {
     final profile = ref.watch(sessionProvider).value?.studentProfile;
     if (profile == null) return const SizedBox.shrink();
 
-    final universe = Universe.fromAge(profile.ageAt(DateTime.now()));
+    final universe = profile.universeAt(DateTime.now());
     final isJunior = universe == Universe.junior;
     final text = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(universe.label),
+        title: Text(profile.schoolingLabel == null ? universe.label : '${universe.label} · ${profile.schoolingLabel}'),
         actions: [
           IconButton(
             tooltip: 'Se déconnecter',

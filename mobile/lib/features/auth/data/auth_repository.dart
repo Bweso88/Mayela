@@ -26,6 +26,8 @@ abstract interface class AuthRepository {
     required String pin,
     required bool parentalConsent,
     String countryCode,
+    int? gradeId,
+    int? trackId,
   });
   Future<AppUser> me();
   Future<void> logout();
@@ -83,6 +85,8 @@ class ApiAuthRepository implements AuthRepository {
     required String pin,
     required bool parentalConsent,
     String countryCode = 'CG',
+    int? gradeId,
+    int? trackId,
   }) async {
     final json = await _api.post('/parent/children', {
       'first_name': firstName.trim(),
@@ -92,6 +96,8 @@ class ApiAuthRepository implements AuthRepository {
       'pin': pin,
       'pin_confirmation': pin,
       'parental_consent': parentalConsent,
+      'grade_id': ?gradeId,
+      'track_id': ?trackId,
     });
     return StudentProfile.fromJson(json['data'] as Map<String, dynamic>);
   }

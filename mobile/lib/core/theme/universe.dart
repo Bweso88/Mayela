@@ -9,8 +9,15 @@ enum Universe {
   /// Seconde → Terminale.
   lycee;
 
-  /// Choix provisoire selon l'âge, tant que la classe n'est pas renseignée
-  /// (la classe et son cycle arrivent en phase 2 et deviendront la référence).
+  /// Univers renvoyé par l'API pour la classe de l'élève (`junior`, `college`, `lycee`).
+  static Universe? fromCode(String? code) => switch (code) {
+    'junior' => Universe.junior,
+    'college' => Universe.college,
+    'lycee' => Universe.lycee,
+    _ => null,
+  };
+
+  /// Repli selon l'âge tant que la classe de l'élève n'est pas renseignée.
   static Universe fromAge(int age) {
     if (age < 11) return Universe.junior;
     if (age < 15) return Universe.college;

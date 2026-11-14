@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/mayela_colors.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/data/models.dart';
+import 'schooling_sheet.dart';
 
 class ParentHomeScreen extends ConsumerWidget {
   const ParentHomeScreen({super.key});
@@ -96,7 +97,10 @@ class _ChildCard extends StatelessWidget {
                     style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 2),
-                  Text('${child.ageAt(DateTime.now())} ans · Niveau ${child.level}', style: text.bodySmall),
+                  Text(
+                    '${child.ageAt(DateTime.now())} ans · ${child.schoolingLabel ?? 'Classe à définir'}',
+                    style: text.bodySmall,
+                  ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -108,6 +112,11 @@ class _ChildCard extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              tooltip: 'Modifier la classe',
+              icon: const Icon(Icons.school_outlined),
+              onPressed: () => SchoolingSheet.show(context, child),
             ),
             IconButton(
               tooltip: 'Copier le code',

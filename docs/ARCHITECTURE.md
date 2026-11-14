@@ -236,27 +236,43 @@ exposées à l'API, `timestamps`, `softDeletes` sur les contenus, FK avec
 | `roles`, `permissions`, … | (spatie/laravel-permission) |
 | `devices` | id, user_id, platform, push_token, last_seen_at |
 
-### 5.2 Programme scolaire (hiérarchie obligatoire)
+### 5.2 Programme scolaire (implémenté en phase 2a)
+
+Deux niveaux distincts :
+
+1. **La structure du système éducatif**, stable d'une année sur l'autre. Celle du Congo a été fournie par l'équipe le 14/11/2026 et chargée par `CongoEducationStructureSeeder`.
+2. **Le programme**, versionné par année scolaire (matières, chapitres).
 
 ```
-countries ─< curricula ─< academic_years ─< grades ─< subjects ─< terms ─< chapters
-                                        grades ─< school_series ─< series_subject >─ subjects
+countries
+ ├─< education_stages      Préscolaire · Primaire · Secondaire général · Secondaire technique
+ │    ├─< education_cycles  Collège · Lycée (facultatif)
+ │    ├─< grades            P1…P3 · CP1 · CP2 · CE1…CM2 · 6e…3e · Seconde · Première · Terminale
+ │    └─< tracks            Séries A, B, C, D · Spécialités Industriel, Commercial, Agricole
+ │         grade_track       Seconde : A, C · Première : A, B, C, D · Terminale : A, B, C, D
+ └─< academic_years ─< terms (trimestres)
+      └── curricula (1 par année ; publication = référence officielle obligatoire)
+           └─< subjects (par classe ; subject_track = séries concernées + coefficient)
+                └─< chapters (rattachés à un trimestre ; statut, is_free, is_demo)
 ```
 
 | Table | Colonnes clés |
 |---|---|
-| `countries` | id, code (ISO, ex. CG), name, default_locale, currency |
-| `curricula` | id, country_id, name, official_reference, status |
-| `academic_years` | id, curriculum_id, label (ex. 2026-2027), starts_on, ends_on, is_active |
-| `grades` | id, academic_year_id, code (CE1…TLE), name, cycle (primary/college/lycee), order |
-| `school_series` | id, grade_id, code, name — **saisies uniquement depuis les textes officiels** |
-| `subjects` | id, grade_id, code, name, color, icon, order |
-| `series_subject` | school_series_id, subject_id, coefficient |
-| `terms` | id, subject_id, number (1-3), name |
-| `chapters` | id, term_id, title, order, is_free (freemium), difficulty, status, current_version_id |
+| `education_stages` | country_id, code, name, position |
+| `education_cycles` | education_stage_id, code, name, position |
+| `grades` | education_stage_id, education_cycle_id?, code, name, position, **universe** (junior/college/lycee), **is_available** (proposée dans l'app) |
+| `tracks` | education_stage_id, kind (series/specialty), code, name |
+| `grade_track` | grade_id, track_id |
+| `academic_years` | country_id, label, starts_on, ends_on, is_current (une seule par pays) |
+| `terms` | academic_year_id, number, name, dates |
+| `curricula` | academic_year_id (unique), name, official_reference, status, published_at, published_by |
+| `subjects` | curriculum_id, grade_id, code, name, color, icon, position |
+| `subject_track` | subject_id, track_id, coefficient. Sans ligne, la matière est commune à toutes les séries |
+| `chapters` | uuid, subject_id, term_id?, title, summary, position, status, is_free, is_demo |
+| `student_profiles` (+) | grade_id, track_id |
 
-*Le lien classe → matière dépend de l'année scolaire : chaque année est
-une copie versionnée (outil de duplication d'année dans l'admin).*
+- **Périmètre de l'application** : CE1 → Terminale (`is_available`). Préscolaire, CP1 et CP2 sont dans la structure mais pas proposés aux élèves.
+- **Secondaire technique** : seules les spécialités sont chargées. Les classes et les « autres spécialités » se complètent dans le back-office quand l'équipe les fournira.
 
 ### 5.3 Contenus pédagogiques et validation
 
@@ -436,4 +452,5 @@ Scan (PDF / photos) ──► upload back-office ──► OCR Tesseract (franç
 |---|---|
 | 0. Audit et architecture | ✅ |
 | 1. Socle technique | ✅ Backend (identité, rôles, API d'authentification, back-office, 40 tests) et app mobile (thème, navigation, connexions, espace parent, 17 tests) |
-| 2. Gestion pédagogique | ⏭️ Prochaine étape |
+| 2a. Structure et programme | ✅ Structure du Congo, années, trimestres, programmes, matières, chapitres (back-office + API), classe/série de l'élève (API + app) |
+| 2b. Contenus | ⏭️ Leçons, objectifs, exemples, exercices, quiz, versions, import CSV/Excel et cours scannés |

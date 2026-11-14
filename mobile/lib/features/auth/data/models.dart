@@ -1,4 +1,56 @@
-/// Modèles miroirs des API Resources Laravel (UserResource, StudentProfileResource).
+// Modèles miroirs des API Resources Laravel (UserResource, StudentProfileResource).
+import '../../../core/theme/universe.dart';
+
+/// Série (A, B, C, D…) ou spécialité.
+class TrackRef {
+  const TrackRef({required this.id, required this.code, required this.name});
+
+  final int id;
+  final String code;
+  final String name;
+
+  factory TrackRef.fromJson(Map<String, dynamic> json) =>
+      TrackRef(id: json['id'] as int, code: json['code'] as String, name: json['name'] as String);
+}
+
+/// Classe (CE1 … Terminale) telle que renvoyée par l'API.
+class GradeRef {
+  const GradeRef({
+    required this.id,
+    required this.code,
+    required this.name,
+    required this.universe,
+    this.contextName,
+    this.tracks = const [],
+  });
+
+  final int id;
+  final String code;
+  final String name;
+  final Universe universe;
+
+  /// Cycle ou ordre d'enseignement (« Lycée », « Primaire »…), si connu.
+  final String? contextName;
+  final List<TrackRef> tracks;
+
+  bool get requiresTrack => tracks.isNotEmpty;
+
+  String get label => contextName == null ? name : '$name · $contextName';
+
+  factory GradeRef.fromJson(Map<String, dynamic> json) {
+    final cycle = _map(json['cycle']);
+    final stage = _map(json['stage']);
+    return GradeRef(
+      id: json['id'] as int,
+      code: json['code'] as String,
+      name: json['name'] as String,
+      universe: Universe.fromCode(json['universe'] as String?) ?? Universe.junior,
+      contextName: (cycle?['name'] ?? stage?['name']) as String?,
+      tracks: (json['tracks'] as List? ?? const []).map((t) => TrackRef.fromJson(_map(t)!)).toList(),
+    );
+  }
+}
+
 class StudentProfile {
   const StudentProfile({
     required this.id,
@@ -10,6 +62,8 @@ class StudentProfile {
     required this.xp,
     this.countryCode,
     this.schoolName,
+    this.grade,
+    this.track,
   });
 
   final String id;
@@ -21,6 +75,14 @@ class StudentProfile {
   final int xp;
   final String? countryCode;
   final String? schoolName;
+  final GradeRef? grade;
+  final TrackRef? track;
+
+  /// Univers visuel : celui de la classe, sinon déduit de l'âge.
+  Universe universeAt(DateTime now) => grade?.universe ?? Universe.fromAge(ageAt(now));
+
+  /// « Première C », « CM2 », ou null si la classe n'est pas définie.
+  String? get schoolingLabel => grade == null ? null : [grade!.name, if (track != null) track!.code].join(' ');
 
   int ageAt(DateTime now) {
     var age = now.year - birthDate.year;
@@ -38,6 +100,8 @@ class StudentProfile {
     xp: (json['xp'] as num?)?.toInt() ?? 0,
     countryCode: json['country_code'] as String?,
     schoolName: json['school_name'] as String?,
+    grade: _parse(json['grade'], GradeRef.fromJson),
+    track: _parse(json['track'], TrackRef.fromJson),
   );
 }
 
@@ -70,11 +134,15 @@ class AppUser {
     email: json['email'] as String?,
     phone: json['phone'] as String?,
     roles: (json['roles'] as List? ?? const []).cast<String>(),
-    studentProfile: json['student_profile'] is Map<String, dynamic>
-        ? StudentProfile.fromJson(json['student_profile'] as Map<String, dynamic>)
-        : null,
-    children: (json['children'] as List? ?? const [])
-        .map((c) => StudentProfile.fromJson(c as Map<String, dynamic>))
-        .toList(),
+    studentProfile: _parse(json['student_profile'], StudentProfile.fromJson),
+    children: (json['children'] as List? ?? const []).map((c) => StudentProfile.fromJson(_map(c)!)).toList(),
   );
+}
+
+/// Convertit un objet JSON en `Map<String, dynamic>` (null si ce n'est pas un objet).
+Map<String, dynamic>? _map(Object? value) => value is Map ? Map<String, dynamic>.from(value) : null;
+
+T? _parse<T>(Object? value, T Function(Map<String, dynamic>) fromJson) {
+  final map = _map(value);
+  return map == null ? null : fromJson(map);
 }

@@ -3,7 +3,7 @@
 Plateforme intelligente de soutien scolaire, du CE1 à la Terminale.
 Premier programme ciblé : République du Congo (architecture multi-pays).
 
-> **État : phase 1 (socle technique) terminée.** Prochaine étape : phase 2, gestion pédagogique.
+> **État : phase 1 (socle) et phase 2a (structure du système éducatif et programme) terminées.** Prochaine étape : phase 2b, contenus pédagogiques et import des cours scannés.
 
 ![Parcours phase 1 : accueil, espace parent, ajout d'un enfant, connexion enfant, accueil Junior](docs/screenshots/phase1-parcours-parent-enfant.png)
 
@@ -63,7 +63,19 @@ flutter test && flutter analyze
 | Inscription autonome des élèves de 15 ans et plus | API (écran prévu avec l'onboarding, phase 3) |
 | 6 rôles et permissions (élève, parent, super-admin, admin pédagogique, contributeur, modérateur) | Backend |
 | Back-office : gestion des utilisateurs, 2FA obligatoire, journal d'audit | Filament |
-| Thème Mayela décliné en 3 univers (Junior / Collège / Lycée) | App |
+| Thème Mayela décliné en 3 univers (Junior / Collège / Lycée), choisi selon la classe | App |
+
+## Ce que fait la phase 2a
+
+![Choix de la classe et de la série, espace parent, accueil Lycée](docs/screenshots/phase2a-choix-classe.png)
+
+| Fonction | Où |
+|---|---|
+| Structure du système éducatif congolais (ordres, cycles, classes, séries, spécialités) | Base + back-office |
+| Années scolaires et trimestres, programmes par année (publication avec référence officielle), matières par classe et par série, chapitres | Back-office |
+| Rôles : un contributeur rédige et envoie en relecture, un admin pédagogique publie | Back-office |
+| Catalogue public des classes ; classe et série de l'enfant (parent) ou de l'élève | API + app |
+| Matières de l'élève selon sa classe et sa série, dans le programme publié de l'année | API |
 
 ## Points à connaître
 

@@ -8,6 +8,8 @@ import '../../../core/api/api_exception.dart';
 import '../../../core/widgets/form_widgets.dart';
 import '../../auth/application/session_controller.dart';
 import '../../auth/data/auth_repository.dart';
+import '../../auth/data/models.dart';
+import '../../catalog/presentation/grade_picker.dart';
 
 class AddChildScreen extends ConsumerStatefulWidget {
   const AddChildScreen({super.key});
@@ -21,6 +23,8 @@ class _AddChildScreenState extends ConsumerState<AddChildScreen> with ApiFormSta
   final _lastName = TextEditingController();
   final _pin = TextEditingController();
   DateTime? _birthDate;
+  GradeRef? _grade;
+  TrackRef? _track;
   bool _consent = false;
 
   @override
@@ -51,6 +55,8 @@ class _AddChildScreenState extends ConsumerState<AddChildScreen> with ApiFormSta
       birthDate: _birthDate!,
       pin: _pin.text,
       parentalConsent: _consent,
+      gradeId: _grade?.id,
+      trackId: _track?.id,
     );
     await ref.read(sessionProvider.notifier).refresh();
     if (!mounted) return;
@@ -99,6 +105,17 @@ class _AddChildScreenState extends ConsumerState<AddChildScreen> with ApiFormSta
                 decoration: InputDecoration(labelText: 'Date de naissance', errorText: field.errorText),
                 child: InkWell(onTap: _pickBirthDate, child: Text(dateLabel)),
               ),
+            ),
+            const SizedBox(height: 16),
+            GradePicker(
+              grade: _grade,
+              track: _track,
+              gradeError: serverError('grade_id'),
+              trackError: serverError('track_id'),
+              onChanged: (grade, track) => setState(() {
+                _grade = grade;
+                _track = track;
+              }),
             ),
             const SizedBox(height: 16),
             TextFormField(

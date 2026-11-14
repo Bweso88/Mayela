@@ -1,6 +1,8 @@
 import 'package:mayela/core/api/api_exception.dart';
 import 'package:mayela/features/auth/data/auth_repository.dart';
+import 'package:mayela/core/theme/universe.dart';
 import 'package:mayela/features/auth/data/models.dart';
+import 'package:mayela/features/catalog/data/catalog_repository.dart';
 
 final parentUser = AppUser(id: 'u-1', name: 'Grâce Nkounkou', roles: const ['parent'], children: [childProfile]);
 
@@ -70,8 +72,36 @@ class FakeAuthRepository implements AuthRepository {
     required String pin,
     required bool parentalConsent,
     String countryCode = 'CG',
-  }) => _answer('add-child:$firstName', childProfile);
+    int? gradeId,
+    int? trackId,
+  }) => _answer('add-child:$firstName:${gradeId ?? '-'}:${trackId ?? '-'}', childProfile);
 
   @override
   Future<void> logout() => _answer('logout', null);
+}
+
+const seriesA = TrackRef(id: 1, code: 'A', name: 'Série A');
+const seriesC = TrackRef(id: 3, code: 'C', name: 'Série C');
+
+const gradeCm2 = GradeRef(id: 9, code: 'CM2', name: 'CM2', universe: Universe.junior, contextName: 'Primaire');
+const gradePremiere = GradeRef(
+  id: 15,
+  code: '1ERE',
+  name: 'Première',
+  universe: Universe.lycee,
+  contextName: 'Lycée',
+  tracks: [seriesA, seriesC],
+);
+
+class FakeCatalogRepository implements CatalogRepository {
+  final schoolingCalls = <String>[];
+
+  @override
+  Future<List<GradeRef>> grades(String countryCode) async => const [gradeCm2, gradePremiere];
+
+  @override
+  Future<StudentProfile> setChildSchooling(String studentId, {required int gradeId, int? trackId}) async {
+    schoolingCalls.add('$studentId:$gradeId:${trackId ?? '-'}');
+    return childProfile;
+  }
 }

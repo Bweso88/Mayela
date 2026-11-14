@@ -2,6 +2,8 @@
 
 namespace App\Modules\Identity\Http\Resources;
 
+use App\Modules\Curriculum\Http\Resources\GradeResource;
+use App\Modules\Curriculum\Http\Resources\TrackResource;
 use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -18,6 +20,8 @@ class StudentProfileResource extends JsonResource
             'birth_date' => $this->birth_date->toDateString(),
             'country_code' => $this->country?->code,
             'school_name' => $this->school_name,
+            'grade' => $this->whenLoaded('grade', fn () => $this->grade ? GradeResource::make($this->grade) : null),
+            'track' => $this->whenLoaded('track', fn () => $this->track ? TrackResource::make($this->track) : null),
             // Code de connexion de l'enfant : visible par lui-même et ses parents uniquement
             // (la ressource n'est servie qu'à eux, cf. StudentProfilePolicy).
             'login_code' => $this->login_code,

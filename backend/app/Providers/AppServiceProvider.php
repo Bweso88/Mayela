@@ -2,6 +2,15 @@
 
 namespace App\Providers;
 
+use App\Modules\Curriculum\Models\AcademicYear;
+use App\Modules\Curriculum\Models\Chapter;
+use App\Modules\Curriculum\Models\Curriculum;
+use App\Modules\Curriculum\Models\EducationStage;
+use App\Modules\Curriculum\Models\Grade;
+use App\Modules\Curriculum\Models\Subject;
+use App\Modules\Curriculum\Models\Track;
+use App\Modules\Curriculum\Policies\ChapterPolicy;
+use App\Modules\Curriculum\Policies\CurriculumStructurePolicy;
 use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Models\User;
 use App\Modules\Identity\Policies\StudentProfilePolicy;
@@ -28,6 +37,10 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(StudentProfile::class, StudentProfilePolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Chapter::class, ChapterPolicy::class);
+        foreach ([EducationStage::class, Grade::class, Track::class, AcademicYear::class, Curriculum::class, Subject::class] as $model) {
+            Gate::policy($model, CurriculumStructurePolicy::class);
+        }
 
         // Le super-admin passe toutes les vérifications d'autorisation.
         Gate::before(fn ($user) => method_exists($user, 'hasRole') && $user->hasRole('super_admin') ? true : null);

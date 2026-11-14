@@ -13,7 +13,7 @@ class MeController extends Controller
     public function __invoke(Request $request): UserResource
     {
         return UserResource::make(
-            $request->user()->load(['studentProfile.country', 'parentProfile.children.country'])
+            $request->user()->load(UserResource::RELATIONS)
         );
     }
 }

@@ -17,6 +17,9 @@ class StoreChildRequest extends FormRequest
             'pin' => ['required', 'digits_between:4,6', 'confirmed'],
             // Consentement explicite du parent pour la création du compte de l'enfant.
             'parental_consent' => ['accepted'],
+            // Classe facultative à la création (modifiable ensuite).
+            'grade_id' => ['nullable', 'integer'],
+            'track_id' => ['nullable', 'integer'],
         ];
     }
 }

@@ -8,4 +8,5 @@ use Illuminate\Support\Facades\Route;
 */
 Route::prefix('v1')->name('api.v1.')->group(function () {
     require app_path('Modules/Identity/routes/api.php');
+    require app_path('Modules/Curriculum/routes/api.php');
 });

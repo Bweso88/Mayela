@@ -3,12 +3,14 @@
 namespace App\Modules\Identity\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Curriculum\Actions\AssignSchooling;
 use App\Modules\Identity\Actions\CreateStudentProfile;
 use App\Modules\Identity\Http\Requests\StoreChildRequest;
 use App\Modules\Identity\Http\Resources\StudentProfileResource;
 use App\Modules\Identity\Models\StudentProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 /**
@@ -22,7 +24,7 @@ class ParentChildController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         return StudentProfileResource::collection(
-            $request->user()->parentProfile->children()->with('country')->orderBy('first_name')->get()
+            $request->user()->parentProfile->children()->with(StudentProfile::API_RELATIONS)->orderBy('first_name')->get()
         );
     }
 
@@ -31,14 +33,21 @@ class ParentChildController extends Controller
      *
      * Crée le compte de l'enfant (connexion par code + PIN) et enregistre le consentement parental.
      */
-    public function store(StoreChildRequest $request, CreateStudentProfile $create): StudentProfileResource
+    public function store(StoreChildRequest $request, CreateStudentProfile $create, AssignSchooling $assign): StudentProfileResource
     {
-        $student = $create(
-            $request->safe()->except(['parental_consent', 'pin_confirmation']),
-            $request->user()->parentProfile,
-            $request->ip(),
-            $request->userAgent(),
-        );
+        // Une classe invalide annule toute la création (transaction).
+        $student = DB::transaction(function () use ($request, $create, $assign) {
+            $student = $create(
+                $request->safe()->except(['parental_consent', 'pin_confirmation', 'grade_id', 'track_id']),
+                $request->user()->parentProfile,
+                $request->ip(),
+                $request->userAgent(),
+            );
+
+            return $request->filled('grade_id')
+                ? $assign($student, $request->integer('grade_id'), $request->input('track_id'))
+                : $student;
+        });
 
         return StudentProfileResource::make($student);
     }
@@ -48,6 +57,6 @@ class ParentChildController extends Controller
     {
         Gate::authorize('view', $student);
 
-        return StudentProfileResource::make($student->load('country'));
+        return StudentProfileResource::make($student->load(StudentProfile::API_RELATIONS));
     }
 }

@@ -77,7 +77,7 @@ class CreateStudentProfile
                 'user_agent' => $userAgent ? mb_substr($userAgent, 0, 255) : null,
             ]);
 
-            return $student->load(['user', 'country']);
+            return $student->load(['user', ...StudentProfile::API_RELATIONS]);
         });
     }
 }

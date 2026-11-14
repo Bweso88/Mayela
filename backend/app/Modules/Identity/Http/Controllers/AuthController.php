@@ -88,7 +88,7 @@ class AuthController extends Controller
 
     private function tokenResponse(User $user, string $token, int $status = 200): JsonResponse
     {
-        $user->load(['studentProfile.country', 'parentProfile.children.country']);
+        $user->load(UserResource::RELATIONS);
 
         return response()->json([
             'token' => $token,

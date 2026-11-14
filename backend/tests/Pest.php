@@ -1,9 +1,12 @@
 <?php
 
+use App\Modules\Curriculum\Models\Grade;
+use App\Modules\Curriculum\Models\Track;
 use App\Modules\Identity\Actions\CreateStudentProfile;
 use App\Modules\Identity\Enums\Role;
 use App\Modules\Identity\Models\StudentProfile;
 use App\Modules\Identity\Models\User;
+use Database\Seeders\CongoEducationStructureSeeder;
 use Database\Seeders\CountrySeeder;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,7 +16,7 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->beforeEach(function () {
-        $this->seed([RolesAndPermissionsSeeder::class, CountrySeeder::class]);
+        $this->seed([RolesAndPermissionsSeeder::class, CountrySeeder::class, CongoEducationStructureSeeder::class]);
     })
     ->in('Feature', 'Unit');
 
@@ -45,4 +48,23 @@ function childOf(User $parent, array $overrides = []): StudentProfile
         'pin' => '2468',
         ...$overrides,
     ], $parent->parentProfile);
+}
+
+function grade(string $code): Grade
+{
+    return Grade::where('code', $code)->firstOrFail();
+}
+
+function track(string $code): Track
+{
+    return Track::where('code', $code)->firstOrFail();
+}
+
+/** Super-admin avec 2FA configurée (accès aux pages Filament). */
+function staff(Role $role = Role::SuperAdmin): User
+{
+    $user = User::factory()->withRole($role)->create();
+    $user->forceFill(['app_authentication_secret' => 'JBSWY3DPEHPK3PXP'])->save();
+
+    return $user;
 }

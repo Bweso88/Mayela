@@ -16,4 +16,10 @@ class StudentProfilePolicy
 
         return (bool) $user->parentProfile?->isParentOf($student);
     }
+
+    /** Seuls les parents rattachés modifient la scolarité de l'enfant. */
+    public function update(User $user, StudentProfile $student): bool
+    {
+        return (bool) $user->parentProfile?->isParentOf($student);
+    }
 }
